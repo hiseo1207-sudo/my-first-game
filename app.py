@@ -68,7 +68,7 @@ except Exception as e:
 # 2. 메인 화면 (상점 및 시작)
 # ==========================================
 def show_start_screen():
-    st.title("🏛️ 턴제 주식 게임 🏛️")
+    st.title("🏛️ 턴제 트레이딩 게임 🏛️")
 
     st.subheader("📊 통산 성적판")
     total_games = len(st.session_state.game_history)
