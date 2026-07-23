@@ -30,7 +30,7 @@ if 'initialized' not in st.session_state:
 # 데이터 로드 (상대 경로)
 @st.cache_data
 def load_data():
-    df = pd.read_csv('11114.csv)  # 상대 경로로 수정
+    df = pd.read_csv('11114.csv')  # 상대 경로로 수정
     df['index'] = pd.to_datetime(df['index'])
     return df
 
