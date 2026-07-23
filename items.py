@@ -17,7 +17,7 @@ class BaseItem:
 
 class YetoItem(BaseItem):
     def __init__(self):
-        super().__init__("예토전생 🧟‍♂️", 0.50, "시작 전 자산으로 복구 및 종료")
+        super().__init__("기사회생 🧟‍♂️", 0.50, "시작 전 자산으로 복구 및 종료")
 
     def use(self, state, df) -> bool:
         state.total_cash = state.initial_cash
@@ -53,14 +53,14 @@ class AchaItem(BaseItem):
 
 class EyeItem(BaseItem):
     def __init__(self):
-        super().__init__("예언자의 눈 🔮", 0.10, "3일 후 주가 확인")
+        super().__init__("예언자 🔮", 0.10, "3일 후 주가 확인")
 
     def use(self, state, df) -> bool:
         target_idx = state.current_idx + 3
         if target_idx < len(df):
             f_price = df.iloc[target_idx]['Adj Close']
             f_date = df.iloc[target_idx]['index'].strftime('%Y-%m-%d')
-            st.info(f"🔮 **예언자의 눈:** 3일 후({f_date}) 종가는 👉 **{int(f_price):,}원** 입니다.")
+            st.toast(f"🔮 **예언자의 눈:** 3일 후({f_date}) 종가는 👉 **{int(f_price):,}원** 입니다.")
             return True
         else:
             st.toast("⚠️ 미래의 주가 데이터가 없습니다.", icon="⚠️")
