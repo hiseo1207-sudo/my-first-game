@@ -22,7 +22,7 @@ class YetoItem(BaseItem):
     def use(self, state, df) -> bool:
         state.total_cash = state.initial_cash
         state.in_game = False
-        st.warning("🧟‍♂️ 예토전생 발동! 시간을 되돌려 시작 전 자산으로 복구되었습니다.")
+        st.toast("🧟‍♂️ 예토전생 발동! 시간을 되돌려 시작 전 자산으로 복구되었습니다.")
         return True
 
 
@@ -32,7 +32,7 @@ class AchaItem(BaseItem):
 
     def use(self, state, df) -> bool:
         if len(state.history_snapshots) == 0:
-            st.warning("⚠️ 돌아갈 이전 기록이 없습니다.", icon="⚠️")
+            st.toast("⚠️ 돌아갈 이전 기록이 없습니다.", icon="⚠️")
             return False
 
         steps = min(3, len(state.history_snapshots))
@@ -47,7 +47,7 @@ class AchaItem(BaseItem):
         state.last_sell_profit = target['last_profit']
         state.trade_history = copy.deepcopy(target['trades'])
 
-        st.warning(f"⏪ 아차차 발동! {steps}턴 전으로 타임리프했습니다!")
+        st.toast(f"⏪ 아차차 발동! {steps}턴 전으로 타임리프했습니다!")
         return True
 
 
@@ -60,10 +60,10 @@ class EyeItem(BaseItem):
         if target_idx < len(df):
             f_price = df.iloc[target_idx]['Adj Close']
             f_date = df.iloc[target_idx]['index'].strftime('%Y-%m-%d')
-            st.warning(f"🔮 **예언자의 눈:** 3일 후({f_date}) 종가는 👉 **{int(f_price):,}원** 입니다.")
+            st.toast(f"🔮 **예언자의 눈:** 3일 후({f_date}) 종가는 👉 **{int(f_price):,}원** 입니다.")
             return True
         else:
-            st.warning("⚠️ 미래의 주가 데이터가 없습니다.", icon="⚠️")
+            st.toast("⚠️ 미래의 주가 데이터가 없습니다.", icon="⚠️")
             return False
 
 
@@ -73,10 +73,10 @@ class DoubleItem(BaseItem):
 
     def use(self, state, df) -> bool:
         if state.last_sell_profit <= 0:
-            st.warning("⚠️ 직전 매도에서 익절 수익이 없었습니다.", icon="⚠️")
+            st.toast("⚠️ 직전 매도에서 익절 수익이 없었습니다.", icon="⚠️")
             return False
         state.total_cash += state.last_sell_profit
-        st.warning(f"✖️2️⃣ 더블 발동! 매도 수익 {int(state.last_sell_profit):,}원을 한 번 더 받았습니다!")
+        st.toast(f"✖️2️⃣ 더블 발동! 매도 수익 {int(state.last_sell_profit):,}원을 한 번 더 받았습니다!")
         return True
 
 
@@ -86,11 +86,11 @@ class TripleItem(BaseItem):
 
     def use(self, state, df) -> bool:
         if state.last_sell_profit <= 0:
-            st.warning("⚠️ 직전 매도에서 익절 수익이 없었습니다.", icon="⚠️")
+            st.toast("⚠️ 직전 매도에서 익절 수익이 없었습니다.", icon="⚠️")
             return False
         bonus = state.last_sell_profit * 2.0
         state.total_cash += bonus
-        st.warning(f"✖️3️⃣ 트리플 발동! 지난 수익의 2배({int(bonus):,}원)를 추가 획득했습니다!")
+        st.toast(f"✖️3️⃣ 트리플 발동! 지난 수익의 2배({int(bonus):,}원)를 추가 획득했습니다!")
         return True
 
 
@@ -100,11 +100,11 @@ class CutterItem(BaseItem):
 
     def use(self, state, df) -> bool:
         if state.last_sell_profit >= 0:
-            st.warning("⚠️ 직전 매도에서 손실이 발생하지 않았습니다.", icon="⚠️")
+            st.toast("⚠️ 직전 매도에서 손실이 발생하지 않았습니다.", icon="⚠️")
             return False
         refund = abs(state.last_sell_profit) * 0.50
         state.total_cash += refund
-        st.warning(f"✂️ 절단기 발동! 매도 손실액의 절반({int(refund):,}원)을 복구했습니다!")
+        st.toast(f"✂️ 절단기 발동! 매도 손실액의 절반({int(refund):,}원)을 복구했습니다!")
         return True
 
 
@@ -114,10 +114,10 @@ class MerongItem(BaseItem):
 
     def use(self, state, df) -> bool:
         if state.holdings_count <= 0:
-            st.warning("⚠️ 보유 주식이 없습니다.", icon="⚠️")
+            st.toast("⚠️ 보유 주식이 없습니다.", icon="⚠️")
             return False
         if state.current_idx <= 0:
-            st.warning("⚠️ 첫 번째 날에는 사용할 수 없습니다.", icon="⚠️")
+            st.toast("⚠️ 첫 번째 날에는 사용할 수 없습니다.", icon="⚠️")
             return False
 
         yesterday_price = float(df.iloc[state.current_idx - 1]['Adj Close'])
@@ -141,7 +141,7 @@ class MerongItem(BaseItem):
         state.holdings_count = 0
         state.invested_amount = 0.0
 
-        st.warning(f"😜 메롱 발동! 어제 종가({int(yesterday_price):,}원)로 전량 매도 완료!")
+        st.toast(f"😜 메롱 발동! 어제 종가({int(yesterday_price):,}원)로 전량 매도 완료!")
         return True
 
 
