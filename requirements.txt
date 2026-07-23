@@ -1,4 +1,4 @@
 streamlit
 pandas
 matplotlib
-kosdaq.db
+11114.csv
