@@ -1,17 +1,14 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import copy
 import os
 
-# 📦 모듈 임포트 (기존 items.py, characters.py 그대로 활용)
+# 📦 모듈 임포트 (items.py, characters.py)
 from items import ITEMS
 from characters import CHARACTERS
 
-# 한글 폰트 및 페이지 설정
+# 페이지 기본 설정
 st.set_page_config(page_title="턴제 주식 게임", page_icon="📈", layout="centered")
-plt.rcParams['font.family'] = 'AppleGothic'  # 서버 환경에 따라 Sans-serif 기본 사용 가능
-plt.rcParams['axes.unicode_minus'] = False
 
 # ==========================================
 # 1. 상태(Session State) 초기화
@@ -26,14 +23,12 @@ if 'initialized' not in st.session_state:
     st.session_state.game_history = []
     st.session_state.in_game = False
 
-
 # 데이터 로드 (상대 경로)
 @st.cache_data
 def load_data():
-    df = pd.read_csv('11114.csv')  # 상대 경로로 수정
+    df = pd.read_csv('11114.csv')
     df['index'] = pd.to_datetime(df['index'])
     return df
-
 
 try:
     df = load_data()
@@ -41,20 +36,19 @@ except Exception as e:
     st.error(f"11114.csv 파일을 찾을 수 없습니다: {e}")
     st.stop()
 
-
 # ==========================================
 # 2. 메인 대기 화면 (시작 화면)
 # ==========================================
 def show_start_screen():
     st.title("🏛️ 턴제 주식 게임 🏛️")
-
+    
     # 통산 성적판
     st.subheader("📊 통산 성적판")
     total_games = len(st.session_state.game_history)
     wins = sum(1 for g in st.session_state.game_history if g['wins'])
     losses = total_games - wins
     win_rate = (wins / total_games * 100) if total_games > 0 else 0.0
-
+    
     st.info(f"전적: **{wins}승 {losses}패** (승률 **{win_rate:.1f}%**)")
 
     # 현재 캐릭터
@@ -64,7 +58,7 @@ def show_start_screen():
     # 자산 및 초기화
     st.success(f"💰 현재 총자산: **{int(st.session_state.total_cash):,}원**")
     if st.session_state.total_cash <= 1_000_000:
-        if st.button("💥 자산 초기화 (1,000만원 복구)"):
+        if st.button("💥 자산 초기화 (1,000만원 복구)", use_container_width=True):
             st.session_state.total_cash = 10_000_000.0
             st.rerun()
 
@@ -74,7 +68,7 @@ def show_start_screen():
         col1, col2 = st.columns([3, 1])
         qty = st.session_state.inventory[item.name]
         cost = int(st.session_state.total_cash * item.cost_ratio)
-        col1.write(f"**{item.name}** (비용: {int(item.cost_ratio * 100)}% / 보유: {qty}개)\n_{item.description}_")
+        col1.write(f"**{item.name}** (비용: {int(item.cost_ratio*100)}% / 보유: {qty}개)\n_{item.description}_")
         if col2.button(f"구매 ({cost:,}원)", key=f"buy_{item.name}"):
             if st.session_state.total_cash >= cost and st.session_state.total_cash > 0:
                 st.session_state.total_cash -= cost
@@ -85,7 +79,6 @@ def show_start_screen():
 
     st.divider()
     if st.button("🎮 게임 시작 🎮", use_container_width=True, type="primary"):
-        # 게임 전용 세션 초기화
         target_matches = df[df['index'] == '2017-12-01']
         st.session_state.start_idx = target_matches.index[0] if not target_matches.empty else 30
         st.session_state.current_idx = st.session_state.start_idx
@@ -93,11 +86,8 @@ def show_start_screen():
         st.session_state.holdings_count = 0
         st.session_state.average_buy_price = 0.0
         st.session_state.initial_cash = st.session_state.total_cash
-        st.session_state.buy_signals = {}
-        st.session_state.sell_signals = {}
         st.session_state.in_game = True
         st.rerun()
-
 
 # ==========================================
 # 3. 인게임 화면
@@ -112,46 +102,48 @@ def show_game_screen():
     col1, col2, col3 = st.columns([2, 1, 1])
     col1.subheader(f"📅 {date_str}")
     col2.metric("남은 턴", f"{st.session_state.turns_left}턴")
-    if col3.button("🛑 그만하기"):
+    if col3.button("🛑 종료"):
         auto_sell_and_end()
 
-    # 캐릭터 및 보유 아이템
+    # 캐릭터 정보
     cur_char = CHARACTERS.get(st.session_state.selected_character, CHARACTERS["평범"])
-    st.caption(f"🎭 **캐릭터:** {cur_char.emoji} {cur_char.name} ({cur_char.description})")
+    st.caption(f"🎭 **캐릭터:** {cur_char.emoji} {cur_char.name}")
 
     # 인게임 아이템 사용
     st.write("🎒 **보유 아이템:**")
     item_cols = st.columns(len(ITEMS))
     for idx, item in enumerate(ITEMS):
         qty = st.session_state.inventory[item.name]
-        if item_cols[idx].button(f"{item.name}\n[{qty}개]", key=f"use_{item.name}"):
+        if item_cols[idx].button(f"{item.name}\n({qty}개)", key=f"use_{item.name}"):
             if qty > 0:
-                # 아이템 사용 로직 연결
                 st.session_state.inventory[item.name] -= 1
-                st.success(f"{item.name} 사용 완료!")
+                st.success(f"{item.name} 사용!")
                 st.rerun()
             else:
-                st.warning("보유 수량이 없습니다.")
+                st.warning("수량 부족")
 
-    # 차트 시각화
+    # 📈 웹 반응형 한글 차트 (아이폰 호환)
+    st.caption("📈 **최근 30일 주가 추이**")
     start_idx = max(0, st.session_state.current_idx - 30)
-    view_df = df.iloc[start_idx: st.session_state.current_idx + 1]
+    view_df = df.iloc[start_idx : st.session_state.current_idx + 1].copy()
+    
+    # 차트용 데이터 가공 (날짜를 인덱스로 설정)
+    chart_data = view_df.set_index('index')[['Adj Close']]
+    chart_data.columns = ['주가(원)']
+    st.line_chart(chart_data)
 
-    fig, ax = plt.subplots(figsize=(6, 3))
-    ax.plot(view_df['index'], view_df['Adj Close'], label='종가', color='black', linewidth=1.5)
-    ax.set_title("최근 30일 주가 추이")
-    ax.grid(True, alpha=0.3)
-    st.pyplot(fig)
+    # 자산 현황
+    c1, c2 = st.columns(2)
+    c1.metric("현재 주가", f"{int(current_price):,}원")
+    c2.metric("총 자산", f"{int(total_asset):,}원", delta=f"{total_asset - st.session_state.initial_cash:,.0f}원")
 
-    # 자산 정보
-    st.metric("현재 주가", f"{int(current_price):,}원")
-    st.metric("총 자산", f"{int(total_asset):,}원", delta=f"{total_asset - st.session_state.initial_cash:,.0f}원")
+    st.write(f"💼 보유 수량: **{st.session_state.holdings_count}주** | 현금: **{int(st.session_state.total_cash):,}원**")
 
     # 매수/매도 컨트롤
-    trade_percent = st.slider("투자 비중 (%)", 10, 100, 50, 10)
-
+    trade_percent = st.slider("거래 비중 (%)", 10, 100, 50, 10)
+    
     b_col, p_col, s_col = st.columns(3)
-    if b_col.button("구 매 📈", use_container_width=True):
+    if b_col.button("매 수 📈", use_container_width=True, type="primary"):
         budget = st.session_state.total_cash * (trade_percent / 100.0)
         cnt = int(budget // current_price)
         if cnt > 0:
@@ -162,13 +154,12 @@ def show_game_screen():
     if p_col.button("관 망 ☕", use_container_width=True):
         next_turn()
 
-    if s_col.button("판 매 📉", use_container_width=True):
+    if s_col.button("매 도 📉", use_container_width=True):
         cnt = int(st.session_state.holdings_count * (trade_percent / 100.0))
         if cnt > 0:
             st.session_state.total_cash += cnt * current_price
             st.session_state.holdings_count -= cnt
         next_turn()
-
 
 def next_turn():
     st.session_state.turns_left -= 1
@@ -177,7 +168,6 @@ def next_turn():
     else:
         st.session_state.current_idx += 1
         st.rerun()
-
 
 def auto_sell_and_end():
     current_price = df.iloc[st.session_state.current_idx]['Adj Close']
@@ -190,8 +180,7 @@ def auto_sell_and_end():
     st.session_state.in_game = False
     st.rerun()
 
-
-# 메인 실행 조건
+# 실행
 if st.session_state.in_game:
     show_game_screen()
 else:
