@@ -1,6 +1,4 @@
-# from tkinter import messagebox
-import copy
-
+import streamlit as st
 
 class BaseCharacter:
     """모든 캐릭터의 기본 클래스"""
@@ -8,9 +6,9 @@ class BaseCharacter:
         self.name = name
         self.emoji = emoji
         self.description = description
-        self.cost = cost  # 해금에 필요한 코인 수
+        self.cost = cost
 
-    def on_game_start(self, app):
+    def on_game_start(self, state):
         """게임 시작 시 실행되는 이벤트 패시브"""
         pass
 
@@ -28,9 +26,9 @@ class FoolCharacter(BaseCharacter):
     def __init__(self):
         super().__init__("기적의 바보", "🤪", "게임 시작 시 총 자산의 +5% 증식", 1)
 
-    def on_game_start(self, app):
-        app.total_cash *= 1.05
-        messagebox.showinfo("기적의 바보 능력 발동!", "🤪 기적의 바보 능력으로 게임 시작 자산이 5% 증가했습니다!")
+    def on_game_start(self, state):
+        state.total_cash *= 1.05
+        st.toast("🤪 [기적의 바보] 발동! 시작 자산이 5% 증가했습니다.")
 
 
 class MathCharacter(BaseCharacter):
@@ -51,8 +49,7 @@ class PickpocketCharacter(BaseCharacter):
         else:
             return raw_profit * 0.90
 
-
-# 🎭 게임 캐릭터 레지스트리 (이름 기준 딕셔너리)
+# 🎭 게임 캐릭터 레지스트리
 CHARACTERS = {
     "평범": NormalCharacter(),
     "기적의 바보": FoolCharacter(),
