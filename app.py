@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import copy
 import os
+import plotly.graph_objects as go
 
 # 📦 모듈 임포트 (items.py, characters.py)
 from items import ITEMS
@@ -122,21 +123,36 @@ def show_game_screen():
             else:
                 st.warning("수량 부족")
 
-    # 📈 웹 반응형 한글 차트 (아이폰 호환)
-    st.caption("📈 **최근 30일 주가 추이**")
+    # 🕯️ 최근 30일 Plotly 캔들 차트 (모바일 최적화)
     start_idx = max(0, st.session_state.current_idx - 30)
     view_df = df.iloc[start_idx : st.session_state.current_idx + 1].copy()
 
-    fig, ax = plt.subplots(figsize=(6, 3))
-    ax.plot(view_df['index'], view_df['Adj Close'], label='종가', color='black', linewidth=1.5)
-    ax.set_title("최근 30일 주가 추이")
-    ax.grid(True, alpha=0.3)
-    st.pyplot(fig)
-    
-    # 차트용 데이터 가공 (날짜를 인덱스로 설정)
-    chart_data = view_df.set_index('index')[['Adj Close']]
-    chart_data.columns = ['주가(원)']
-    st.line_chart(chart_data)
+    # CSV에 시가/고가/저가 열이 존재하면 사용하고, 없을 경우 수정주가 기반 대치
+    open_col = 'Open' if 'Open' in view_df.columns else 'Adj Close'
+    high_col = 'High' if 'High' in view_df.columns else 'Adj Close'
+    low_col = 'Low' if 'Low' in view_df.columns else 'Adj Close'
+    close_col = 'Adj Close' if 'Adj Close' in view_df.columns else 'Close'
+
+    fig = go.Figure(data=[go.Candlestick(
+        x=view_df['index'],
+        open=view_df[open_col],
+        high=view_df[high_col],
+        low=view_df[low_col],
+        close=view_df[close_col],
+        increasing_line_color='red',   # 상승 (양봉): 빨간색
+        decreasing_line_color='blue'   # 하락 (음봉): 파란색
+    )])
+
+    fig.update_layout(
+        title="🕯️ 최근 30일 주가 추이 (캔들 차트)",
+        xaxis_rangeslider_visible=False,  # 하단 하단 슬라이더 숨김 (아이폰 화면에 딱 맞게)
+        margin=dict(l=10, r=10, t=40, b=10),
+        height=320,
+        template="plotly_white",
+        font=dict(size=12)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
     # 자산 현황
     c1, c2 = st.columns(2)
