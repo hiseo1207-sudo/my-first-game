@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import copy
 import os
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 # 📦 모듈 임포트 (items.py, characters.py)
 from items import ITEMS
@@ -124,45 +122,21 @@ def show_game_screen():
             else:
                 st.warning("수량 부족")
 
-    # 🕯️ Matplotlib 기반 캔들 차트 생성
-    st.caption("🕯️ **최근 30일 주가 추이 (캔들 차트)**")
+    # 📈 웹 반응형 한글 차트 (아이폰 호환)
+    st.caption("📈 **최근 30일 주가 추이**")
     start_idx = max(0, st.session_state.current_idx - 30)
     view_df = df.iloc[start_idx : st.session_state.current_idx + 1].copy()
 
-    # 컬럼 체크 (시가/고가/저가가 없으면 Adj Close 기반으로 대치)
-    open_col = 'Open' if 'Open' in view_df.columns else 'Adj Close'
-    high_col = 'High' if 'High' in view_df.columns else 'Adj Close'
-    low_col = 'Low' if 'Low' in view_df.columns else 'Adj Close'
-    close_col = 'Adj Close' if 'Adj Close' in view_df.columns else 'Close'
-
-    fig, ax = plt.subplots(figsize=(7, 3.2))
-
-    # 양봉(상승) / 음봉(하락) 판별
-    up = view_df[close_col] >= view_df[open_col]
-    down = view_df[close_col] < view_df[open_col]
-
-    # 1. 고가-저가 잇는 선 (심지)
-    ax.vlines(view_df['index'], view_df[low_col], view_df[high_col], color='gray', linewidth=1)
-
-    # 2. 시가-종가 몸통 (한국식: 양봉 빨강 / 음봉 파랑)
-    ax.bar(view_df.loc[up, 'index'], 
-           view_df.loc[up, close_col] - view_df.loc[up, open_col],
-           bottom=view_df.loc[up, open_col], color='red', width=0.6)
-
-    # 음봉의 경우 (시가 > 종가) 높이는 시가-종가, 기준점(bottom)은 종가
-    ax.bar(view_df.loc[down, 'index'], 
-           view_df.loc[down, open_col] - view_df.loc[down, close_col],
-           bottom=view_df.loc[down, close_col], color='blue', width=0.6)
-
-    # 서식 및 눈금 설정 (한글 회피용 날짜 및 포맷 지정)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
-    plt.xticks(rotation=45, fontsize=8)
-    plt.yticks(fontsize=8)
-    ax.grid(True, linestyle='--', alpha=0.4)
-    plt.tight_layout()
-
-    # Streamlit 화면에 차트 출력
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.plot(view_df['index'], view_df['Adj Close'], label='종가', color='black', linewidth=1.5)
+    ax.set_title("최근 30일 주가 추이")
+    ax.grid(True, alpha=0.3)
     st.pyplot(fig)
+    
+    # 차트용 데이터 가공 (날짜를 인덱스로 설정)
+    chart_data = view_df.set_index('index')[['Adj Close']]
+    chart_data.columns = ['주가(원)']
+    st.line_chart(chart_data)
 
     # 자산 현황
     c1, c2 = st.columns(2)
