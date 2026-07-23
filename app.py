@@ -7,6 +7,7 @@ import os
 # 📦 모듈 임포트 (기존 items.py, characters.py 그대로 활용)
 from items import ITEMS
 from characters import CHARACTERS
+from 11114.csv import CSV
 
 # 한글 폰트 및 페이지 설정
 st.set_page_config(page_title="턴제 주식 게임", page_icon="📈", layout="centered")
@@ -30,7 +31,7 @@ if 'initialized' not in st.session_state:
 # 데이터 로드 (상대 경로)
 @st.cache_data
 def load_data():
-    df = pd.read_csv('11114.csv')  # 상대 경로로 수정
+    df = pd.read_csv(CSV)  # 상대 경로로 수정
     df['index'] = pd.to_datetime(df['index'])
     return df
 
